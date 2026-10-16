@@ -2,7 +2,7 @@
 window.MENU = {
   store: 'thatiscoffee',
   icon: '☕',
-  subtitle: '함께 쓰는 카페 주문 체크표 · 각자 주문 후 내역 공유',
+  subtitle: '📋 주문 체크표입니다. ☕ 각자 메뉴를 고른 뒤 👇 아래로 내려와 주문 내역을 확인하고, ✍️ 이름(호칭, 별명)을 쓴 다음 📨 "주문 보내기" 버튼을 눌러 주세요 😊',
   memoHint: '개별 HOT/ICE, 시럽, 기타 요청사항',
   // 체크하면 optionSkip에 없는 카테고리 메뉴 1개당 price를 더한다 (음수는 할인). 옵션이 없으면 [].
   options: [
