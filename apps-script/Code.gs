@@ -1,6 +1,7 @@
 // thatiscoffee 단체 주문 모으기 (구글 시트 확장 프로그램 > Apps Script에 붙여 넣기)
 // 배포: 배포 > 새 배포 > 웹 앱, 실행 계정 "나", 액세스 권한 "모든 사용자"
 const SHEET = '주문', ARCHIVE = '지난주문';
+const MENU_SHEET = '메뉴', OPT_SHEET = '옵션', SET_SHEET = '설정';
 
 function sheet_(name) {
   const ss = SpreadsheetApp.getActive();
@@ -29,8 +30,45 @@ function list_() {
   });
 }
 
+// '메뉴' 탭(카테고리|메뉴|가격), '옵션' 탭(옵션|가격|표시 문구), '설정' 탭(항목|값)을 읽는다.
+// '메뉴' 탭이 없거나 비어 있으면 null을 돌려주고, 주문표는 menu.js의 메뉴를 쓴다.
+function num_(v) {
+  return Math.round(Number(String(v).replace(/[^0-9.\-]/g, '')));
+}
+
+function menu_() {
+  const ss = SpreadsheetApp.getActive();
+  const m = ss.getSheetByName(MENU_SHEET);
+  if (!m) return null;
+  const items = m.getDataRange().getValues().slice(1)
+    .map(r => [String(r[0]).trim() || '기타', String(r[1]).trim(), num_(r[2])])
+    .filter(r => r[1] && r[2] > 0);
+  if (!items.length) return null;
+
+  const set = {};
+  const s = ss.getSheetByName(SET_SHEET);
+  if (s) s.getDataRange().getValues().slice(1).forEach(r => { if (String(r[0]).trim()) set[String(r[0]).trim()] = String(r[1]).trim(); });
+
+  const o = ss.getSheetByName(OPT_SHEET);
+  const options = !o ? [] : o.getDataRange().getValues().slice(1)
+    .map(r => ({ name: String(r[0]).trim(), price: num_(r[1]), label: String(r[2]).trim() }))
+    .filter(x => x.name && x.price)
+    .map(x => ({ name: x.name, price: x.price, label: x.label || `${x.name} (${x.price > 0 ? '+' : '-'}${Math.abs(x.price).toLocaleString('ko-KR')}원/개)` }));
+
+  return {
+    store: set['가게 이름'] || '단체 주문',
+    icon: set['아이콘'] || '📋',
+    subtitle: set['안내 문구'] || '',
+    memoHint: set['요청사항 안내'] || '',
+    notes: set['참고 문구'] || '',
+    optionSkip: (set['옵션 제외 카테고리'] || '').split(',').map(x => x.trim()).filter(Boolean),
+    options,
+    items
+  };
+}
+
 function doGet() {
-  return out_({ ok: true, orders: list_() });
+  return out_({ ok: true, orders: list_(), menu: menu_() });
 }
 
 function doPost(e) {
